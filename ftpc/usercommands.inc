@@ -102,7 +102,6 @@ cmd_retr:
 
 	mov	dword[buf_cmd], "RETR"
 	mov	byte[buf_cmd+4], " "
-
 	mov	ecx, 256
 	xor	al, al
 	mov	edi, buf_cmd
@@ -242,12 +241,44 @@ cmd_size:
 	jmp	wait_for_servercommand
 
 cmd_rest:
+	mov	esi, buf_cmd+5
+	mov	ecx, 256-5
+	call	set_filename
+	;invoke  con_write_asciiz, buf_cmd
+	mov	[filestruct.subfn], 5	; get information about file
+	mov	[filestruct.offset], 0
+	mov	[filestruct.offset+4], 0
+	mov	[filestruct.size], 0
+	mov	[filestruct.ptr], buf_for_answer
+	mcall	70, filestruct
+	cmp	eax,0
+	jne	.error
+	mov	eax, dword[buf_for_answer+32]
+	mov	[size_check],eax
+	;invoke  con_write_asciiz, int_string
 	mov	dword[buf_cmd], "REST"
 	mov	byte[buf_cmd+4], " "
-	mov	byte[buf_cmd+5], "0"
-	mov	word[buf_cmd+6], 0x0d0a
-	mcall	send, [controlsocket], buf_cmd, 7, 0
-
+	mov	edi,buf_cmd+5
+	call	intToString
+	add	eax,4
+	mov	byte[buf_cmd+eax],10
+	inc	eax
+	mov	dword[buf_cmd+eax],0 ;some bad code
+	add	eax,4
+	mov	dword[buf_cmd+eax],0
+	add	eax,4
+	mov	dword[buf_cmd+eax],0
+	;inc     eax
+	;dec     eax
+	;dec     eax
+	mov	ecx, 256
+	xor	al, al
+	mov	edi, buf_cmd
+	repne scasb
+	lea	esi, [edi - buf_cmd]
+	mov	dword[edi - 2], 0x0a0d
+	mcall	send, [controlsocket], buf_cmd,, 0; send rest command to server
+	.error:; need add error handler
 	jmp	wait_for_servercommand
 
 
@@ -269,3 +300,42 @@ set_filename:
 	stosb
 
 	ret
+
+
+
+
+; eax = number to stringify/output
+; edi = location of buffer
+
+intToString:
+    push  edx
+    push  ecx
+    push  edi
+    push  ebp
+    mov   ebp, esp
+    mov   ecx, 10
+
+ .pushDigits:
+    xor   edx, edx	  ; zero-extend eax
+    div   ecx		  ; divide by 10; now edx = next digit
+    add   edx, 30h	  ; decimal value + 30h => ascii digit
+    push  edx		  ; push the whole dword, cause that's how x86 rolls
+    test  eax, eax	  ; leading zeros suck
+    jnz   .pushDigits
+
+ .popDigits:
+    pop   eax
+    stosb		  ; don't write the whole dword, just the low byte
+    cmp   esp, ebp	  ; if esp==ebp, we've popped all the digits
+    jne   .popDigits
+
+    xor   eax, eax	  ; add trailing nul
+    stosb
+
+    mov   eax, edi
+    pop   ebp
+    pop   edi
+    pop   ecx
+    pop   edx
+    sub   eax, edi	  ; return number of bytes written
+    ret

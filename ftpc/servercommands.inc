@@ -26,6 +26,9 @@ server_parser:
 	cmp	dword[buf_cmd], "331 "
 	je	pass
 
+	cmp	dword[buf_cmd], "350 "
+	je	rest
+
 ;        cmp     dword[buf_cmd], "421 "
 ;        je      timeout
 
@@ -98,6 +101,8 @@ pasv_ok:
   .fail:
 	invoke	con_write_asciiz, str_unknown
 	jmp	wait_for_servercommand
+
+rest:
 
 
 data_loop:

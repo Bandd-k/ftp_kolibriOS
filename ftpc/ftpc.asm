@@ -113,12 +113,6 @@ main:
 	invoke	con_cls
 ; Welcome user
 	invoke	con_write_asciiz, str_welcome
-	invoke	file_size, str_file
-	mov [check_size],eax
-	inc eax
-	jz .error
-	invoke	con_printf,str_format,check_size
-	.error:
 ; write prompt (in green color)
 	invoke	con_set_flags, 0x0a
 	invoke	con_write_asciiz, str_prompt
@@ -325,6 +319,9 @@ wait_for_usercommand:
 	cmp	dword[buf_cmd], "retr"
 	je	cmd_retr
 
+	cmp	dword[buf_cmd], "rest"
+	je	cmd_rest
+
 
 	cmp	dword[buf_cmd], "stor"
 	je	cmd_stor
@@ -345,8 +342,6 @@ wait_for_usercommand:
 	cmp	dword[buf_cmd], "help"
 	je	cmd_help
 
-	cmp	dword[buf_cmd], "rest"
-	je	cmd_rest
 
 	cmp	dword[buf_cmd], "cdup"
 	je	cmd_cdup
@@ -613,9 +608,7 @@ str_port_stop	db 'port_stop', 0
 str_ip		db 'ip', 0
 str_dir 	db 'dir', 0
 str_general	db 'general', 0
-str_file	db 'D:/usbhd0/1/ftp/ftpc.asmb',0
-str_format	db '%d -size',10
-check_size	dd ?
+format_str	db '%d',0
 queued		dd 0
 mode		db 0	; passive = 0, active = 1
 
@@ -701,9 +694,13 @@ filestruct:
   .ptr		dd ?
   .name 	rb 1024
 
+size_check	dd ?
+int_string	rb 50
+buf_for_answer	rb 50
 buf_buffer1	rb BUFFERSIZE+1
 buf_buffer2	rb BUFFERSIZE+1
 buf_cmd 	rb 1024 		; buffer for holding command string
+cmd_copy	rb 1024
 
 path		rb 1024
 
