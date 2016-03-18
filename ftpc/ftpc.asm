@@ -693,8 +693,8 @@ filestruct:
   .size 	dd ?
   .ptr		dd ?
   .name 	rb 1024
-
-size_check	dd ?
+is_rest 	db 0
+size_check	dd 0
 int_string	rb 50
 buf_for_answer	rb 50
 buf_buffer1	rb BUFFERSIZE+1

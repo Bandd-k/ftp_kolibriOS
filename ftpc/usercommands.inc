@@ -73,28 +73,36 @@ cmd_list:
 
 
 cmd_retr:
+
 	call	open_dataconnection
 
 ; Create/open the file
-
-; Create/open the file
+	cmp	byte[is_rest],1
+	jne	.buf_changed
+	call	copy_to_cmd ;return correct buffer to retrieve file
+	;invoke  con_write_asciiz, buf_cmd
+	;int 3
+	.buf_changed:
+	mov	eax,dword[is_rest]
+	cmp	eax,0
+	jne	 .rest_part
 
 	mov	esi, buf_cmd+5
 	mov	ecx, 256-5
 	call	set_filename
-
 	mov	[filestruct.subfn], 2	; create/rewrite file
 	mov	[filestruct.offset], 0
 	mov	[filestruct.offset+4], 0
 	mov	[filestruct.size], 0
 	mov	[filestruct.ptr], 0
-
 	mcall	70, filestruct
 	cmp	eax, -1
 ;        je      fileerror
 
 ; Prepare to write to the file
-
+	.rest_part:
+	mov	eax,[size_check]
+	mov	[filestruct.offset],eax
 	mov	[filestruct.subfn], 3	; write to file
 	mov	[operation], OPERATION_RETR
 
@@ -241,10 +249,10 @@ cmd_size:
 	jmp	wait_for_servercommand
 
 cmd_rest:
+	mov	[is_rest],1
 	mov	esi, buf_cmd+5
 	mov	ecx, 256-5
 	call	set_filename
-	;invoke  con_write_asciiz, buf_cmd
 	mov	[filestruct.subfn], 5	; get information about file
 	mov	[filestruct.offset], 0
 	mov	[filestruct.offset+4], 0
@@ -254,31 +262,33 @@ cmd_rest:
 	cmp	eax,0
 	jne	.error
 	mov	eax, dword[buf_for_answer+32]
+	inc	eax
 	mov	[size_check],eax
 	;invoke  con_write_asciiz, int_string
-	mov	dword[buf_cmd], "REST"
-	mov	byte[buf_cmd+4], " "
-	mov	edi,buf_cmd+5
+	mov	dword[cmd_copy], "REST"
+	mov	byte[cmd_copy+4], " "
+	mov	edi,cmd_copy+5
 	call	intToString
 	add	eax,4
-	mov	byte[buf_cmd+eax],10
+	mov	byte[cmd_copy+eax],10
 	inc	eax
-	mov	dword[buf_cmd+eax],0 ;some bad code
+	mov	dword[cmd_copy+eax],0 ;some bad code
 	add	eax,4
-	mov	dword[buf_cmd+eax],0
+	mov	dword[cmd_copy+eax],0
 	add	eax,4
-	mov	dword[buf_cmd+eax],0
+	mov	dword[cmd_copy+eax],0
 	;inc     eax
 	;dec     eax
 	;dec     eax
 	mov	ecx, 256
 	xor	al, al
-	mov	edi, buf_cmd
+	mov	edi, cmd_copy
 	repne scasb
-	lea	esi, [edi - buf_cmd]
+	lea	esi, [edi - cmd_copy]
 	mov	dword[edi - 2], 0x0a0d
-	mcall	send, [controlsocket], buf_cmd,, 0; send rest command to server
+	mcall	send, [controlsocket], cmd_copy,, 0; send rest command to server
 	.error:; need add error handler
+	call	cmd_to_copy
 	jmp	wait_for_servercommand
 
 
@@ -339,3 +349,38 @@ intToString:
     pop   edx
     sub   eax, edi	  ; return number of bytes written
     ret
+
+cmd_to_copy:
+    push eax
+    push edi
+    mov edi,0
+    .start:
+    cmp edi,1024
+    je	.end
+    mov eax,dword[buf_cmd+edi]
+    mov dword[cmd_copy+edi],eax
+    add edi,4
+    jmp .start
+    .end:
+    pop eax
+    pop edi
+    ret
+
+copy_to_cmd:
+    push eax
+    push edi
+    mov edi,0
+    .start:
+    cmp edi,1024
+    je	.end
+    mov eax,dword[cmd_copy+edi]
+    mov dword[buf_cmd+edi],eax
+    add edi,4
+    jmp .start
+    .end:
+    pop eax
+    pop edi
+    ret
+
+
+

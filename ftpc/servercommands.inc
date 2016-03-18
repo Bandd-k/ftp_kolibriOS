@@ -27,7 +27,7 @@ server_parser:
 	je	pass
 
 	cmp	dword[buf_cmd], "350 "
-	je	rest
+	je	cmd_retr
 
 ;        cmp     dword[buf_cmd], "421 "
 ;        je      timeout
@@ -158,6 +158,7 @@ data_loop:
 	invoke	con_write_asciiz, str_close
 	mcall	close, [datasocket]
 	mov	[operation], OPERATION_NONE
+	mov	[is_rest],0
 	jmp	wait_for_servercommand
 
   .rdir:
