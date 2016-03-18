@@ -72,7 +72,7 @@ cmd_list:
 	jmp	wait_for_servercommand
 
 
-cmd_retr:
+cmd_retr:      ; execution depends on is_rest flag.
 
 	call	open_dataconnection
 
@@ -116,6 +116,7 @@ cmd_retr:
 	repne scasb
 	lea	esi, [edi - buf_cmd]
 	mov	dword[edi - 2], 0x0a0d
+	mov	[is_rest],0
 	mcall	send, [controlsocket], buf_cmd, , 0
 
 	invoke	con_write_asciiz, buf_cmd     ; print command
@@ -272,14 +273,11 @@ cmd_rest:
 	add	eax,4
 	mov	byte[cmd_copy+eax],10
 	inc	eax
-	mov	dword[cmd_copy+eax],0 ;some bad code
+	mov	dword[cmd_copy+eax],0 ;some bad code, I don't know how to correct
 	add	eax,4
 	mov	dword[cmd_copy+eax],0
 	add	eax,4
 	mov	dword[cmd_copy+eax],0
-	;inc     eax
-	;dec     eax
-	;dec     eax
 	mov	ecx, 256
 	xor	al, al
 	mov	edi, cmd_copy
@@ -287,9 +285,12 @@ cmd_rest:
 	lea	esi, [edi - cmd_copy]
 	mov	dword[edi - 2], 0x0a0d
 	mcall	send, [controlsocket], cmd_copy,, 0; send rest command to server
-	.error:; need add error handler
 	call	cmd_to_copy
 	jmp	wait_for_servercommand
+	;file is not exist
+	.error:
+	invoke	con_write_asciiz, str_file_error
+	jmp wait_for_usercommand
 
 
 ; esi   = source ptr

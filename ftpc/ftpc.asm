@@ -578,6 +578,7 @@ str_user	db "username: ",0
 str_pass	db "password: ",0
 str_unknown	db "Unknown command or insufficient parameters - type help for more information.",10,0
 str_lcwd	db "Local working directory is now: ",0
+str_file_error	db "Read file error",10,0
 
 str_open	db "opening data socket",10,0
 str_close	db 10,"closing data socket",10,0
@@ -595,7 +596,7 @@ str_help	db "available commands:",10
 		db "pwd             - print server working directory",10
 		db "size <file>     - print size of remote file",10
 		db "retr <file>     - retreive file from the server",10
-		db "rest            - restart transfer from the specified point.",10
+		db "rest <file>     - restart transfer from the specified point.",10
 		db "rmd <directory> - remove directory from the server",10
 		db "stor <file>     - store file on the server",10
 		db "rdir            - retreive all files from current server dir",10

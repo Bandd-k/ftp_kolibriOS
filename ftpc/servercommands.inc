@@ -26,7 +26,7 @@ server_parser:
 	cmp	dword[buf_cmd], "331 "
 	je	pass
 
-	cmp	dword[buf_cmd], "350 "
+	cmp	dword[buf_cmd], "350 "	;if rest-ok -> go to download this file
 	je	cmd_retr
 
 ;        cmp     dword[buf_cmd], "421 "
