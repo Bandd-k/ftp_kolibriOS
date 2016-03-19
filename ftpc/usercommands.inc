@@ -26,6 +26,14 @@ cmd_pwd:
 
 	jmp	wait_for_servercommand
 
+cmd_bin:
+	mov	dword[buf_cmd], "TYPE"
+	mov	byte[buf_cmd+4]," "
+	mov	byte[buf_cmd+5],"I"
+	mov	word[buf_cmd+6], 0x0a0d
+	mcall	send, [controlsocket], buf_cmd, 8, 0
+	jmp	wait_for_servercommand
+
 
 cmd_cwd:
 
@@ -102,6 +110,7 @@ cmd_retr:      ; execution depends on is_rest flag.
 ; Prepare to write to the file
 	.rest_part:
 	mov	eax,[size_check]
+	;inc     eax
 	mov	[filestruct.offset],eax
 	mov	[filestruct.subfn], 3	; write to file
 	mov	[operation], OPERATION_RETR
@@ -197,8 +206,8 @@ cmd_lcwd:
 cmd_cdup:
 
 	mov	dword[buf_cmd], "CDUP"
-	mov	word[buf_cmd+4], 0x0d0a
-	mcall	send, [controlsocket], buf_cmd, 5, 0
+	mov	word[buf_cmd+4], 0x0a0d
+	mcall	send, [controlsocket], buf_cmd, 6, 0
 
 	jmp	wait_for_servercommand
 
@@ -263,7 +272,7 @@ cmd_rest:
 	cmp	eax,0
 	jne	.error
 	mov	eax, dword[buf_for_answer+32]
-	inc	eax
+	sub	eax,102500     ;small rollout
 	mov	[size_check],eax
 	;invoke  con_write_asciiz, int_string
 	mov	dword[cmd_copy], "REST"

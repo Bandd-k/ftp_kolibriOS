@@ -295,11 +295,15 @@ wait_for_usercommand:
 	cmp	dword[buf_cmd], "cwd "
 	je	cmd_cwd
 
+
 	cmp	dword[buf_cmd], "mkd "
 	je	cmd_mkd
 
 	cmp	dword[buf_cmd], "rmd "
 	je	cmd_rmd
+
+	cmp	dword[buf_cmd], "bin" + 10 shl 24
+	je	cmd_bin
 
 	cmp	dword[buf_cmd], "pwd" + 10 shl 24
 	je	cmd_pwd
