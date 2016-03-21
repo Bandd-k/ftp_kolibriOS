@@ -272,7 +272,7 @@ cmd_rest:
 	cmp	eax,0
 	jne	.error
 	mov	eax, dword[buf_for_answer+32]
-	sub	eax,102500     ;small rollout
+	sub	eax,[rollback]	   ;adding rollback
 	mov	[size_check],eax
 	;invoke  con_write_asciiz, int_string
 	mov	dword[cmd_copy], "REST"

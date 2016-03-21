@@ -94,6 +94,13 @@ start:
   .ip_ok:
 	mov	byte[esi-1], 0
 
+	invoke	ini.get_int, path,str_general,str_mode,0
+	mov	dword[mode],eax
+	mov	eax,dword[mode]
+
+	invoke	ini.get_int, path,str_general,str_rollback,10240
+	mov	[rollback],eax
+
 	invoke	ini.get_int, path, str_active, str_port_start, 64000
 	mov	[acti_port_start], ax
 
@@ -603,6 +610,7 @@ str_help	db "available commands:",10
 		db "rest <file>     - restart transfer from the specified point.",10
 		db "rmd <directory> - remove directory from the server",10
 		db "stor <file>     - store file on the server",10
+		db "bin             - switch to binary mode",10
 		db "rdir            - retreive all files from current server dir",10
 		db 10,0
 
@@ -610,12 +618,15 @@ str_ini 	db '.ini', 0
 str_active	db 'active', 0
 str_port_start	db 'port_start', 0
 str_port_stop	db 'port_stop', 0
+str_mode	db 'mode',0
+str_rollback	db 'rollback',0
 str_ip		db 'ip', 0
 str_dir 	db 'dir', 0
 str_general	db 'general', 0
 format_str	db '%d',0
 queued		dd 0
 mode		db 0	; passive = 0, active = 1
+rollback	dd 10240     ;  numbers of bytes to rewrite
 
 ; FTP strings
 
